@@ -11,6 +11,7 @@
         :key="index"
         :contentDetail="detail"
       />
+
       <SpinnerLoadContent v-if="loadingInMorePost" />
     </div>
     <SpinnerLoadContent v-else />
@@ -42,23 +43,38 @@ watch(data, () => {
   }
 });
 // eslint-disable-next-line no-undef
-const posts: Ref<null | NodeListOf<HTMLHeadingElement>> = ref(null);
+// const posts: Ref<null | NodeListOf<HTMLHeadingElement>> = ref(null);
 
-function observePosts() {
-  posts.value = document.querySelectorAll(".content-container");
-  if (posts.value) {
-    posts.value.forEach((post) => {
-      const observePost = new IntersectionObserver((posts) => {
-        posts.forEach((post) => {
-          post.target.classList.toggle("hide", !post.isIntersecting);
-        });
-      });
-      observePost.observe(post);
+// function observePosts() {
+//   posts.value = document.querySelectorAll(".content-container");
+//   if (posts.value) {
+//     posts.value.forEach((post) => {
+//       const observePost = new IntersectionObserver((posts) => {
+//         posts.forEach((post) => {
+//           post.target.classList.toggle("hide", !post.isIntersecting);
+//         });
+//       });
+//       observePost.observe(post);
+//     });
+//   }
+// }
+
+function observeFirstContent(container: HTMLElement | null): void {
+  const contentContainerWatch = document.querySelector(".content-container");
+  if (contentContainerWatch) {
+    const observeFirstContent = new IntersectionObserver((content) => {
+      if (content[0].isIntersecting && container) {
+        container.style.minHeight = "auto";
+      }
     });
+    observeFirstContent.observe(contentContainerWatch);
   }
 }
-
 function loadMoreContent() {
+  const contentContainer: HTMLElement | null = document.querySelector(
+    ".content-scroller-container"
+  );
+  observeFirstContent(contentContainer);
   if (content.value.length < 120) {
     if (scrollContainer.value) {
       const scrollPercentage: number =
@@ -89,7 +105,28 @@ function loadMoreContent() {
           if (indexOfContent.value === 7) {
             indexOfContent.value = 1;
           }
-          content.value.splice(0, content.value.length - 50);
+
+          const contentHeight: HTMLElement | null =
+            document.querySelector(".content-container");
+          console.log(contentContainer);
+          const amountToMinus = content.value.length - 50;
+          if (contentHeight && contentContainer) {
+            const heightToAdd: number = contentHeight.clientHeight;
+            content.value.splice(0, amountToMinus);
+            console.log(
+              heightToAdd * amountToMinus,
+              (
+                heightToAdd * amountToMinus +
+                contentContainer?.scrollHeight
+              ).toString() + "px"
+            );
+
+            contentContainer.style.minHeight =
+              (
+                heightToAdd * amountToMinus +
+                contentContainer?.scrollHeight
+              ).toString() + "px";
+          }
         }
       }
     }
@@ -134,5 +171,6 @@ function loadMoreContent() {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
 }
 </style>
